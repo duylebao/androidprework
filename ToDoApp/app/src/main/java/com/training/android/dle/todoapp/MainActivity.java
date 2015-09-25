@@ -1,5 +1,6 @@
 package com.training.android.dle.todoapp;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -9,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
 
@@ -22,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayAdapter<String> todoAdapters;
     ListView lvItems;
     EditText etEditText;
+    private final int REQUEST_CODE = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +43,24 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        lvItems.setOnItemClickListener( new AdapterView.OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id){
+                String text = todoItems.get(position);
+                launchTextEditor(text, position);
+            }
+        });
+    }
+
+    public void launchTextEditor(String text, int position) {
+        // first parameter is the context, second is the class of the activity to launch
+        Intent i = new Intent(MainActivity.this, EditItemActivity.class);
+        // put "extras" into the bundle for access in the second activity
+        i.putExtra("text", text);
+        i.putExtra("position", position);
+      //  startActivity(i);
+        startActivityForResult(i, REQUEST_CODE);
     }
 
     public void populateArrayItems(){
@@ -97,5 +118,18 @@ public class MainActivity extends AppCompatActivity {
         todoAdapters.add( etEditText.getText().toString());
         etEditText.setText("");
         writeItems();
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+            // Extract name value from result extras
+            String text = data.getExtras().getString("text");
+            int position = data.getIntExtra("position", 0);
+            todoItems.set(position, text);
+            todoAdapters.notifyDataSetChanged();
+            writeItems();
+        }
     }
 }
